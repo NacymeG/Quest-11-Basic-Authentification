@@ -1,25 +1,23 @@
+const express = require('express');
+const app = express();
 const moviesRouter = require('express').Router();
 const Movie = require('../models/movie');
+const cookieParser = require('cookie-parser');
 
-moviesRouter.get('/', (req, res) => {
+moviesRouter.get('/', async (req, res) => {
   const { max_duration, color } = req.query;
+  const cookieToken = await req.headers.cookie.split('=')[1];
+  if (cookieToken) {
+    const queryGetID = await Movie.findIdbyToken(cookieToken);
+    const queryShowMovies = await Movie.findMovieByUserID(queryGetID[0]);
+    return await res.status(201).json(queryShowMovies[0]);
+  }
   Movie.findMany({ filters: { max_duration, color } })
     .then((movies) => {
       res.json(movies);
     })
     .catch((err) => {
       console.log(err);
-      res.status(500).send('Error retrieving movies from database');
-    });
-});
-
-moviesRouter.get('/', async (req, res) => {
-  const { max_duration, color } = req.query;
-  Movie.findMany({ filters: { max_duration, color } })
-    .then((movies) => {
-      res.json(movies);
-    })
-    .catch((err) => {
       res.status(500).send('Error retrieving movies from database');
     });
 });
@@ -38,19 +36,24 @@ moviesRouter.get('/:id', (req, res) => {
     });
 });
 
-moviesRouter.post('/', (req, res) => {
-  const error = Movie.validate(req.body);
+app.use(cookieParser());
+
+moviesRouter.post('/', async (req, res) => {
+  const cookie = await req.headers.cookie.split('=')[1];
+
+  console.log('User Cookie :', cookie);
+
+  const user = await Movie.findByCookie(cookie);
+  if (!user) return res.send('you are not logged');
+  req.body.user_id = user.id;
+  const newBody = await req.body;
+  console.log('alors ?', newBody);
+  const error = await Movie.validate(req.body);
   if (error) {
     res.status(422).json({ validationErrors: error.details });
   } else {
-    Movie.create(req.body)
-      .then((createdMovie) => {
-        res.status(201).json(createdMovie);
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send('Error saving the movie');
-      });
+    const MovieCreated = await Movie.create(req.body);
+    res.status(201).json(MovieCreated);
   }
 });
 

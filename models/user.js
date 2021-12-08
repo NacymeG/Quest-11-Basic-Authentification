@@ -8,10 +8,12 @@ const validate = (data, forCreation = true) => {
   const presence = forCreation ? 'required' : 'optional';
   return Joi.object({
     email: Joi.string().email().max(255).presence(presence),
+    hashedPassword: Joi.string().min(8).presence(presence),
     firstname: Joi.string().max(255).presence(presence),
     lastname: Joi.string().max(255).presence(presence),
     city: Joi.string().allow(null, '').max(255),
     language: Joi.string().allow(null, '').max(255),
+    token: Joi.string().allow(null, '').max(255),
   }).validate(data, { abortEarly: false }).error;
 };
 
@@ -36,6 +38,26 @@ const findByEmail = (email) => {
   return db
     .query('SELECT * FROM users WHERE email = ?', [email])
     .then(([results]) => results[0]);
+};
+
+const findByEmailPassword = (email) => {
+  return db
+    .query(
+      'SELECT email, hashedPassword, id FROM movies.users WHERE email = ?',
+      [email]
+    )
+    .then(([results]) => results[0]);
+};
+
+// const findByEmailPassword = async (email) => {
+//   return await db.query(
+//     'SELECT email, hashedPassword FROM movies.users WHERE email = ?',
+//     [email]
+//   );
+// };
+
+const verifyPassword = (plainPassword, hashedPassword) => {
+  return argon2.verify(hashedPassword, plainPassword, hashingOptions);
 };
 
 const findByEmailWithDifferentId = (email, id) => {
@@ -72,10 +94,6 @@ const hashPassword = (plainPassword) => {
   return argon2.hash(plainPassword, hashingOptions);
 };
 
-const verifyPassword = (plainPassword, hashedPassword) => {
-  return argon2.verify(hashedPassword, plainPassword, hashingOptions);
-};
-
 module.exports = {
   findMany,
   findOne,
@@ -87,4 +105,5 @@ module.exports = {
   findByEmailWithDifferentId,
   hashPassword,
   verifyPassword,
+  findByEmailPassword,
 };

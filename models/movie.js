@@ -11,6 +11,7 @@ const validate = (data, forCreation = true) => {
     year: Joi.number().integer().min(1888).presence(presence),
     color: Joi.boolean().presence(presence),
     duration: Joi.number().integer().min(1).presence(presence),
+    user_id: Joi.number().presence(presence),
   }).validate(data, { abortEarly: false }).error;
 };
 
@@ -38,15 +39,36 @@ const findOne = (id) => {
     .then(([results]) => results[0]);
 };
 
-const create = ({ title, director, year, color, duration }) => {
+const findByCookie = (cookie) => {
+  return db
+    .query('SELECT id FROM movies.users WHERE token = ?', [cookie])
+    .then(([results]) => results[0]);
+};
+
+const findIdbyToken = async (cookie) => {
+  const query = await db.query('SELECT id FROM movies.users WHERE token = ?;', [
+    cookie,
+  ]);
+  return Object.values(JSON.parse(JSON.stringify(query[0][0])));
+};
+
+const findMovieByUserID = async (id) => {
+  const query = await db.query(
+    'SELECT title, director, year, color, duration FROM movies.movies WHERE user_id = ?;',
+    [id]
+  );
+  return JSON.parse(JSON.stringify(query[0]));
+};
+
+const create = ({ title, director, year, color, duration, user_id }) => {
   return db
     .query(
-      'INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)',
-      [title, director, year, color, duration]
+      'INSERT INTO movies (title, director, year, color, duration, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, director, year, color, duration, user_id]
     )
     .then(([result]) => {
       const id = result.insertId;
-      return { id, title, director, year, color, duration };
+      return { id, title, director, year, color, duration, user_id };
     });
 };
 
@@ -67,4 +89,7 @@ module.exports = {
   create,
   update,
   destroy,
+  findByCookie,
+  findIdbyToken,
+  findMovieByUserID,
 };
