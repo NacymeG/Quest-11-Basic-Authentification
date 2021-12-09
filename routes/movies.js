@@ -6,9 +6,10 @@ const cookieParser = require('cookie-parser');
 
 moviesRouter.get('/', async (req, res) => {
   const { max_duration, color } = req.query;
-  const cookieToken = await req.headers.cookie.split('=')[1];
-  if (cookieToken) {
+  if (req.headers.cookie) {
+    const cookieToken = await req.headers.cookie.split('=')[1];
     const queryGetID = await Movie.findIdbyToken(cookieToken);
+    console.log('ID :', queryGetID[0]);
     const queryShowMovies = await Movie.findMovieByUserID(queryGetID[0]);
     return await res.status(201).json(queryShowMovies[0]);
   }
