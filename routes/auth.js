@@ -12,7 +12,10 @@ checkUsersRouter.post('/', async (req, res) => {
   );
 
   if (mailPass && verify) {
-    const token = await TokenCreation.calculateToken(mailPass.email);
+    const token = await TokenCreation.calculateToken(
+      mailPass.email,
+      mailPass.id
+    );
     console.log(token);
     User.update(mailPass.id, { token: token });
     return res.status(200).cookie('user_token', token).send('token created');

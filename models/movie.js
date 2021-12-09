@@ -46,18 +46,18 @@ const findByCookie = (cookie) => {
 };
 
 const findIdbyToken = async (cookie) => {
-  const query = await db.query('SELECT id FROM movies.users WHERE token = ?;', [
+  const rows = await db.query('SELECT id FROM movies.users WHERE token = ?;', [
     cookie,
   ]);
-  return Object.values(JSON.parse(JSON.stringify(query[0][0])));
+  return Object.values(JSON.parse(JSON.stringify(rows[0][0])));
 };
 
 const findMovieByUserID = async (id) => {
-  const query = await db.query(
+  const rows = await db.query(
     'SELECT title, director, year, color, duration FROM movies.movies WHERE user_id = ?;',
     [id]
   );
-  return JSON.parse(JSON.stringify(query[0]));
+  return JSON.parse(JSON.stringify(rows[0]));
 };
 
 const create = ({ title, director, year, color, duration, user_id }) => {

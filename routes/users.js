@@ -1,5 +1,4 @@
 const usersRouter = require('express').Router();
-const checkUsersRouter = require('express').Router();
 const User = require('../models/user');
 const TokenCreation = require('../helpers/users');
 

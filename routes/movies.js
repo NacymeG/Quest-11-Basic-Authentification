@@ -3,15 +3,15 @@ const app = express();
 const moviesRouter = require('express').Router();
 const Movie = require('../models/movie');
 const cookieParser = require('cookie-parser');
+const Helpers = require('../helpers/users');
 
 moviesRouter.get('/', async (req, res) => {
   const { max_duration, color } = req.query;
   if (req.headers.cookie) {
-    const cookieToken = await req.headers.cookie.split('=')[1];
-    const queryGetID = await Movie.findIdbyToken(cookieToken);
-    console.log('ID :', queryGetID[0]);
-    const queryShowMovies = await Movie.findMovieByUserID(queryGetID[0]);
-    return await res.status(201).json(queryShowMovies[0]);
+    const token = await req.headers.cookie.split('=')[1];
+    const decodedToken = await Helpers.decode(token);
+    const queryShowMovies = await Movie.findMovieByUserID(decodedToken.user_id);
+    return await res.status(201).json(queryShowMovies);
   }
   Movie.findMany({ filters: { max_duration, color } })
     .then((movies) => {
@@ -40,15 +40,12 @@ moviesRouter.get('/:id', (req, res) => {
 app.use(cookieParser());
 
 moviesRouter.post('/', async (req, res) => {
-  const cookie = await req.headers.cookie.split('=')[1];
+  if (req.headers.cookie) {
+    const token = await req.headers.cookie.split('=')[1];
+    const decodedToken = await Helpers.decode(token);
+    req.body.user_id = decodedToken.user_id;
+  } else return res.send('you are not logged');
 
-  console.log('User Cookie :', cookie);
-
-  const user = await Movie.findByCookie(cookie);
-  if (!user) return res.send('you are not logged');
-  req.body.user_id = user.id;
-  const newBody = await req.body;
-  console.log('alors ?', newBody);
   const error = await Movie.validate(req.body);
   if (error) {
     res.status(422).json({ validationErrors: error.details });

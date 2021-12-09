@@ -17,8 +17,11 @@
     "cookie-parser": "^1.4.6",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "install": "^0.13.0",
     "joi": "^17.4.0",
-    "mysql2": "^2.2.5"
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.2.5",
+    "npm": "^8.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"
